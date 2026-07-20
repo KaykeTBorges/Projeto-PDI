@@ -1,0 +1,29 @@
+
+venv/
+.venv/
+env/
+ENV/
+
+# Caches do Python e do Streamlit
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.streamlit/config.toml
+
+.vscode/
+
+# Arquivos do Sistema Operacional
+Thumbs.db
+.DS_Store
+
+*.jpg
+*.jpeg
+*.png
+*.mp4
+*.avi
+
+#Adicione uma exclamação se quiser manter alguma imagem de teste específica
+!assets/test1.jpg  
+!assets/test2.jpg 
