@@ -1,83 +1,49 @@
 """
-processing/grayscale/histogram_eq.py
---------------------------------------
 Equalização de histograma para imagens grayscale (modo 'L').
 
-Contrato com o app.py:
-    equalize_histogram(img) -> (imagem_equalizada, hist_antes, hist_depois)
-
-onde:
-    - imagem_equalizada : PIL.Image no modo 'L'
-    - hist_antes        : list[float] de 256 posições (frequências relativas)
-    - hist_depois       : list[float] de 256 posições (frequências relativas)
+Retorna a imagem equalizada + os histogramas antes e depois,
+que o app.py passa para o display.py exibir como gráfico de barras.
 """
 
-import numpy as np
+import cv2
 from PIL import Image
 
+from utils.image_io import pil_to_numpy, numpy_to_pil
 
-def _compute_hist(arr: np.ndarray) -> list[float]:
-    """Retorna histograma normalizado (frequências relativas) de array uint8."""
+
+def _histograma_normalizado(arr) -> list[float]:
+    """Conta quantas vezes cada tom (0–255) aparece e divide pelo total de pixels."""
+    import numpy as np
     counts = np.bincount(arr.ravel(), minlength=256).astype(float)
     total = counts.sum()
-    if total == 0:
-        return [0.0] * 256
-    return (counts / total).tolist()
+    return (counts / total).tolist() if total > 0 else [0.0] * 256
 
 
 def equalize_histogram(
     imagem: Image.Image,
 ) -> tuple[Image.Image, list[float], list[float]]:
     """
-    Aplica equalização de histograma a uma imagem grayscale.
+    Equaliza o histograma de uma imagem grayscale.
 
-    Parameters
+    Parâmetros
     ----------
-    imagem : PIL.Image
-        Imagem no modo 'L' (grayscale 8-bit). Se o modo for diferente, uma
-        ValueError é levantada — a sidebar já restringe este processo a
-        imagens grayscale.
+    imagem : PIL.Image modo 'L'
 
-    Returns
+    Retorno
     -------
-    imagem_eq : PIL.Image
-        Imagem equalizada, modo 'L'.
-    hist_antes : list[float]
-        Histograma normalizado (256 valores) antes da equalização.
-    hist_depois : list[float]
-        Histograma normalizado (256 valores) após a equalização.
-
-    Raises
-    ------
-    ValueError
-        Se a imagem não estiver no modo 'L'.
+    imagem_eq   : PIL.Image equalizada
+    hist_antes  : list[float] — histograma normalizado original (256 valores)
+    hist_depois : list[float] — histograma normalizado após equalização
     """
     if imagem.mode != "L":
         raise ValueError(
-            f"equalize_histogram: esperava imagem no modo 'L' (grayscale), "
-            f"mas recebeu modo '{imagem.mode}'."
+            f"Esperava imagem grayscale (modo 'L'), mas recebeu '{imagem.mode}'."
         )
 
-    arr = np.array(imagem, dtype=np.uint8)
+    arr = pil_to_numpy(imagem)
+    hist_antes = _histograma_normalizado(arr)
 
-    # Histograma antes
-    hist_antes = _compute_hist(arr)
+    arr_eq = cv2.equalizeHist(arr)
+    hist_depois = _histograma_normalizado(arr_eq)
 
-    # CDF para calcular o mapeamento de intensidades
-    hist_counts = np.bincount(arr.ravel(), minlength=256)
-    cdf = hist_counts.cumsum()
-    cdf_min = int(cdf[cdf > 0][0])   # menor valor não-nulo da CDF
-    n_pixels = arr.size
-
-    # Mapeamento de intensidades via fórmula clássica de equalização
-    lut = np.round(
-        (cdf - cdf_min) / (n_pixels - cdf_min) * 255
-    ).clip(0, 255).astype(np.uint8)
-
-    arr_eq = lut[arr]
-
-    # Histograma depois
-    hist_depois = _compute_hist(arr_eq)
-
-    imagem_eq = Image.fromarray(arr_eq, mode="L")
-    return imagem_eq, hist_antes, hist_depois
+    return numpy_to_pil(arr_eq, modo="L"), hist_antes, hist_depois
