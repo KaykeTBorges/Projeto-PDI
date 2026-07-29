@@ -205,6 +205,13 @@ PROCESSOS = {
     },
 }
 
+# Processos que só funcionam internamente com imagem grayscale passam a
+# aceitar RGB também — a conversão é feita pelo app.py antes de chamar a função.
+for _proc in PROCESSOS.values():
+    if _proc["tipos"] == ["grayscale"]:
+        _proc["tipos"] = ["grayscale", "rgb"]
+        _proc["modo_entrada"] = "grayscale"
+
 
 def renderizar_parametro(processo_nome: str, param: dict):
     """Renderiza o widget de parâmetro adequado e retorna o valor escolhido."""
@@ -260,6 +267,6 @@ def render_sidebar(tipo_imagem: str, info: dict) -> tuple[str | None, bool]:
             st.caption("Desabilitados para este tipo de imagem: " + ", ".join(opcoes_desabilitadas))
 
         st.divider()
-        aplicar = st.button("Aplicar processo", use_container_width=True, disabled=(processo_nome is None))
+        aplicar = st.button("Aplicar processo", width="stretch", disabled=(processo_nome is None))
 
     return processo_nome, aplicar
