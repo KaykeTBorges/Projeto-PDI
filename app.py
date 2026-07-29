@@ -29,7 +29,10 @@ def main():
         return
 
     imagem_original = image_io.load_image(arquivo)
+    modo_antes = imagem_original.mode
     imagem_original = validation.normalize_image(imagem_original)
+    if modo_antes == "RGB" and imagem_original.mode == "L":
+        st.info("Imagem detectada como grayscale (estava salva em modo RGB) — convertida automaticamente.")
     tipo_imagem = validation.detect_image_type(imagem_original)
     info = validation.image_info(imagem_original)
 
