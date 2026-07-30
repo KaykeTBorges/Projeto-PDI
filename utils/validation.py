@@ -6,10 +6,17 @@ RGB 24-bit), usadas pelo app.py para habilitar/desabilitar processos
 condicionalmente.
 """
 
+import numpy as np
 from PIL import Image
 
 
 TIPOS_VALIDOS = ("grayscale", "rgb")
+
+
+def _is_grayscale_rgb(image: Image.Image) -> bool:
+    """Verifica se uma imagem em modo RGB é na prática grayscale (R == G == B em todo pixel)."""
+    arr = np.asarray(image)
+    return np.array_equal(arr[:, :, 0], arr[:, :, 1]) and np.array_equal(arr[:, :, 0], arr[:, :, 2])
 
 
 def detect_image_type(image: Image.Image) -> str:
@@ -27,7 +34,9 @@ def detect_image_type(image: Image.Image) -> str:
 
     if mode == "L":
         return "grayscale"
-    if mode in ("RGB", "RGBA", "P", "CMYK", "YCbCr"):
+    if mode == "RGB":
+        return "grayscale" if _is_grayscale_rgb(image) else "rgb"
+    if mode in ("RGBA", "P", "CMYK", "YCbCr"):
         return "rgb"
 
     # Modos incomuns (ex.: '1' bilevel, 'I', 'F') caem aqui.

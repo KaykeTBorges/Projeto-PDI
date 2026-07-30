@@ -23,24 +23,35 @@ def main():
     st.title("Software de Processamento Digital de Imagens")
     st.caption("Feito para a disciplina de Introdução ao Processamento Digital de Imagens")
 
-    # Area principal: upload de arquivo, imagens de entrada/saída, parâmetros do processo, resultado (histogramas, laplaciano, decomposições) e botão de download.
     arquivo = display.render_upload_section()
     if arquivo is None:
         st.info("Carregue uma imagem .png para começar.")
         return
 
     imagem_original = image_io.load_image(arquivo)
+    modo_antes = imagem_original.mode
     imagem_original = validation.normalize_image(imagem_original)
+    if modo_antes == "RGB" and imagem_original.mode == "L":
+        st.info("Imagem detectada como grayscale (estava salva em modo RGB) — convertida automaticamente.")
     tipo_imagem = validation.detect_image_type(imagem_original)
     info = validation.image_info(imagem_original)
 
-    # Sidebar: seleção de processo, parâmetros do processo, botão "Aplicar"
     processo_nome, aplicar = sidebar.render_sidebar(tipo_imagem, info)
 
-    # Aréa principal: exibição da imagem de entrada e criação das colunas para a imagem de saída
-    col_original, col_saida = display.render_input_image(imagem_original)
+    # Se o processo selecionado requer grayscale e a imagem é RGB,
+    # exibe a versão convertida como "entrada" para o usuário.
+    requer_gray_selecionado = (
+        processo_nome is not None
+        and sidebar.PROCESSOS.get(processo_nome, {}).get("modo_entrada") == "grayscale"
+        and imagem_original.mode != "L"
+    )
+    imagem_exibida = imagem_original.convert("L") if requer_gray_selecionado else imagem_original
 
-    # Renderiza os parâmetros do processo selecionado, na área principal (abaixo das imagens)
+    col_original, col_saida = display.render_input_image(imagem_exibida)
+    if requer_gray_selecionado:
+        with col_original:
+            st.caption("Exibida em grayscale — o processo selecionado requer esse modo.")
+
     parametros = display.render_parametros(processo_nome)
 
     # Guarda o último processo/parâmetros aplicados em session_state, para o
@@ -53,12 +64,17 @@ def main():
     processo_aplicado = st.session_state.get("processo_aplicado")
     parametros_aplicados = st.session_state.get("parametros_aplicados", {})
 
-    # Executa o processo selecionado (se houver) 
     resultado = None
     extra = None
     if processo_aplicado:
+        modo_entrada = sidebar.PROCESSOS.get(processo_aplicado, {}).get("modo_entrada")
+        imagem_para_processar = (
+            imagem_original.convert("L")
+            if modo_entrada == "grayscale" and imagem_original.mode != "L"
+            else imagem_original
+        )
         try:
-            saida = sidebar.PROCESSOS[processo_aplicado]["fn"](imagem_original, parametros_aplicados)
+            saida = sidebar.PROCESSOS[processo_aplicado]["fn"](imagem_para_processar, parametros_aplicados)
         except Exception as e:
             st.error(f"Erro ao executar o processo '{processo_aplicado}': {e}")
             saida = None
@@ -76,11 +92,9 @@ def main():
         else:
             resultado = saida
 
-    # Renderiza a imagem de saída (ou uma mensagem, se o resultado estiver em 'extra'), os acessórios (histogramas, laplaciano, decomposições) e o botão de download do(s) resultado(s).
     display.render_output_image(col_saida, resultado, extra)
     display.render_extra(extra)
     display.render_download_button(resultado)
 
-# Executa a função main() apenas se este arquivo for executado diretamente (não importado como módulo).
 if __name__ == "__main__":
     main()
