@@ -1,10 +1,6 @@
-""""
+"""
 Ponto de entrada do software de Processamento Digital de Imagens (PDI).
-
-Este arquivo só orquestra: carrega a imagem, chama a sidebar (ui/sidebar.py)
-para obter o processo escolhido, chama a área principal (ui/display.py)
-para exibir upload/imagens/parâmetros/resultado, executa a função de
-processamento e guarda o estado em st.session_state.
+Orquestração corrigida com proteção de estado para evitar quebras de cache.
 """
 
 import streamlit as st
@@ -15,7 +11,6 @@ from utils import validation
 from ui import sidebar
 from ui import display
 
-
 st.set_page_config(page_title="PDI - Processamento Digital de Imagens", layout="wide")
 
 
@@ -25,6 +20,10 @@ def main():
 
     arquivo = display.render_upload_section()
     if arquivo is None:
+        # CORREÇÃO: Limpa o estado se o usuário remover o arquivo para não quebrar o cache
+        st.session_state.pop("processo_aplicado", None)
+        st.session_state.pop("parametros_aplicados", None)
+        st.session_state.pop("processo_atual_interface", None)
         st.info("Carregue uma imagem .png para começar.")
         return
 
@@ -38,11 +37,12 @@ def main():
 
     processo_nome, aplicar = sidebar.render_sidebar(tipo_imagem, info)
 
-    # Se o processo selecionado requer grayscale e a imagem é RGB,
-    # exibe a versão convertida como "entrada" para o usuário.
+    # CORREÇÃO: Alinhado com a chave do dicionário de PROCESSOS que usa 'tipos' em vez de 'modo_entrada'
+    processo_infos = sidebar.PROCESSOS.get(processo_nome, {})
     requer_gray_selecionado = (
         processo_nome is not None
-        and sidebar.PROCESSOS.get(processo_nome, {}).get("modo_entrada") == "grayscale"
+        and "grayscale" in processo_infos.get("tipos", [])
+        and "rgb" not in processo_infos.get("tipos", [])
         and imagem_original.mode != "L"
     )
     imagem_exibida = imagem_original.convert("L") if requer_gray_selecionado else imagem_original
@@ -54,9 +54,14 @@ def main():
 
     parametros = display.render_parametros(processo_nome)
 
-    # Guarda o último processo/parâmetros aplicados em session_state, para o
-    # resultado continuar visível mesmo após reruns do Streamlit (que
-    # acontecem a cada interação com qualquer widget da página).
+    # CORREÇÃO: Se o usuário mudou o processo selecionado na barra lateral,
+    # nós limpamos o resultado anterior para evitar conflitos de parâmetros antigos com o filtro novo.
+    if st.session_state.get("processo_atual_interface") != processo_nome:
+        st.session_state["processo_atual_interface"] = processo_nome
+        st.session_state.pop("processo_aplicado", None)
+        st.session_state.pop("parametros_aplicados", None)
+
+    # Se clicou em aplicar, aí sim fixamos a execução no estado
     if aplicar:
         st.session_state["processo_aplicado"] = processo_nome
         st.session_state["parametros_aplicados"] = parametros
@@ -66,35 +71,61 @@ def main():
 
     resultado = None
     extra = None
+    
     if processo_aplicado:
-        modo_entrada = sidebar.PROCESSOS.get(processo_aplicado, {}).get("modo_entrada")
-        imagem_para_processar = (
-            imagem_original.convert("L")
-            if modo_entrada == "grayscale" and imagem_original.mode != "L"
-            else imagem_original
+        processo_aplicado_infos = sidebar.PROCESSOS.get(processo_aplicado, {})
+        # CORREÇÃO: Ajuste fino na detecção se o filtro aplicado exige tons de cinza
+        deve_converter = (
+            "grayscale" in processo_aplicado_infos.get("tipos", []) 
+            and "rgb" not in processo_aplicado_infos.get("tipos", [])
+            and imagem_original.mode != "L"
         )
+        imagem_para_processar = imagem_original.convert("L") if deve_converter else imagem_original
+        
+        # MELHORIA DE UX: mostra um spinner enquanto o processo roda, já que
+        # alguns filtros (ex: Filtro adaptativo de mediana) podem demorar
+        # vários segundos em imagens grandes.
         try:
-            saida = sidebar.PROCESSOS[processo_aplicado]["fn"](imagem_para_processar, parametros_aplicados)
+            with st.spinner(f"Aplicando '{processo_aplicado}'... isso pode levar alguns segundos."):
+                saida = sidebar.PROCESSOS[processo_aplicado]["fn"](imagem_para_processar, parametros_aplicados)
         except Exception as e:
             st.error(f"Erro ao executar o processo '{processo_aplicado}': {e}")
             saida = None
 
         acessorio = sidebar.PROCESSOS[processo_aplicado]["acessorio"]
-        if acessorio == "decomposicao" and saida is not None:
-            resultado = None
-            extra = saida
-        elif acessorio == "histogramas" and saida is not None:
-            resultado, hist_antes, hist_depois = saida
-            extra = {"hist_antes": hist_antes, "hist_depois": hist_depois}
-        elif acessorio == "laplaciano" and saida is not None:
-            resultado, laplaciano = saida
-            extra = {"laplaciano": laplaciano}
-        else:
-            resultado = saida
+        
+        # CORREÇÃO CRÍTICA: Desempacotamento seguro baseado no tipo de acessório e tamanho do retorno.
+        # Evita o erro 'too many values to unpack' checando se a tupla tem o tamanho esperado.
+        if saida is not None:
+            if acessorio == "decomposicao":
+                resultado = None
+                extra = saida
+                
+            elif acessorio == "histogramas":
+                if isinstance(saida, tuple) and len(saida) == 3:
+                    resultado, hist_antes, hist_depois = saida
+                    extra = {"hist_antes": hist_antes, "hist_depois": hist_depois}
+                else:
+                    resultado = saida
+                    extra = None
+                    
+            elif acessorio == "laplaciano":
+                if isinstance(saida, tuple) and len(saida) == 2:
+                    resultado, laplaciano = saida
+                    extra = {"laplaciano": laplaciano}
+                else:
+                    # Se houver lixo residual no cache que retorne 3 elementos, extrai o primeiro com segurança
+                    resultado = saida[0] if isinstance(saida, (tuple, list)) else saida
+                    extra = None
+            else:
+                # Filtros comuns de imagem única (como o Filtro Adaptativo de Mediana) caem aqui
+                resultado = saida[0] if isinstance(saida, (tuple, list)) else saida
+                extra = None
 
     display.render_output_image(col_saida, resultado, extra)
     display.render_extra(extra)
     display.render_download_button(resultado)
+
 
 if __name__ == "__main__":
     main()
