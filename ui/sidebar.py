@@ -73,10 +73,7 @@ def run_gaussian_lowpass(img, p):
     return gaussian_filters.gaussian_lowpass(img, p["cutoff"])
 
 
-# ---------------------------------------------------------------------------
-# Dicionário de processos com suas categorias, tipos de imagem, parâmetros
-# e funções correspondentes.
-# ---------------------------------------------------------------------------
+# Dicionário de processos disponíveis, com suas categorias, tipos de imagem compatíveis, parâmetros e funções de execução.
 
 PROCESSOS = {
     "Decomposição em RGB": {
@@ -235,7 +232,6 @@ ORDEM_CATEGORIAS = [
     "Filtros de frequência",
 ]
 
-
 def render_sidebar(tipo_imagem: str, info: dict):
     """
     Renderiza a barra lateral: informações da imagem carregada, seletor de
@@ -259,11 +255,7 @@ def render_sidebar(tipo_imagem: str, info: dict):
         st.divider()
         st.header("Processo")
 
-        # "Espaço de cor" (decomposição RGB/HSV) não faz sentido para uma
-        # imagem que já é grayscale, então essa categoria é bloqueada nesse
-        # caso. Para imagens coloridas, todas as categorias ficam visíveis;
-        # se o usuário escolher um processo que exige grayscale, avisamos
-        # que a imagem será convertida automaticamente.
+        # Filtra as categorias e processos disponíveis com base no tipo de imagem carregada.
         categorias_presentes = [
             categoria for categoria in ORDEM_CATEGORIAS
             if any(infos["categoria"] == categoria for infos in PROCESSOS.values())

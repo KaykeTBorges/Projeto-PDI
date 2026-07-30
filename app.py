@@ -20,7 +20,6 @@ def main():
 
     arquivo = display.render_upload_section()
     if arquivo is None:
-        # CORREÇÃO: Limpa o estado se o usuário remover o arquivo para não quebrar o cache
         st.session_state.pop("processo_aplicado", None)
         st.session_state.pop("parametros_aplicados", None)
         st.session_state.pop("processo_atual_interface", None)
@@ -37,7 +36,6 @@ def main():
 
     processo_nome, aplicar = sidebar.render_sidebar(tipo_imagem, info)
 
-    # CORREÇÃO: Alinhado com a chave do dicionário de PROCESSOS que usa 'tipos' em vez de 'modo_entrada'
     processo_infos = sidebar.PROCESSOS.get(processo_nome, {})
     requer_gray_selecionado = (
         processo_nome is not None
@@ -54,8 +52,7 @@ def main():
 
     parametros = display.render_parametros(processo_nome)
 
-    # CORREÇÃO: Se o usuário mudou o processo selecionado na barra lateral,
-    # nós limpamos o resultado anterior para evitar conflitos de parâmetros antigos com o filtro novo.
+    # correção de estado: se o processo atual da interface mudou, limpamos o cache de processo aplicado e parâmetros aplicados
     if st.session_state.get("processo_atual_interface") != processo_nome:
         st.session_state["processo_atual_interface"] = processo_nome
         st.session_state.pop("processo_aplicado", None)
@@ -74,7 +71,7 @@ def main():
     
     if processo_aplicado:
         processo_aplicado_infos = sidebar.PROCESSOS.get(processo_aplicado, {})
-        # CORREÇÃO: Ajuste fino na detecção se o filtro aplicado exige tons de cinza
+        # Correção de UX: se o processo selecionado requer grayscale, mas a imagem original não está nesse modo, convertemos para grayscale antes de processar.
         deve_converter = (
             "grayscale" in processo_aplicado_infos.get("tipos", []) 
             and "rgb" not in processo_aplicado_infos.get("tipos", [])
@@ -82,9 +79,7 @@ def main():
         )
         imagem_para_processar = imagem_original.convert("L") if deve_converter else imagem_original
         
-        # MELHORIA DE UX: mostra um spinner enquanto o processo roda, já que
-        # alguns filtros (ex: Filtro adaptativo de mediana) podem demorar
-        # vários segundos em imagens grandes.
+        # Spinner para melhorar UX durante o processamento, com mensagem informativa.
         try:
             with st.spinner(f"Aplicando '{processo_aplicado}'... isso pode levar alguns segundos."):
                 saida = sidebar.PROCESSOS[processo_aplicado]["fn"](imagem_para_processar, parametros_aplicados)
@@ -93,9 +88,8 @@ def main():
             saida = None
 
         acessorio = sidebar.PROCESSOS[processo_aplicado]["acessorio"]
-        
-        # CORREÇÃO CRÍTICA: Desempacotamento seguro baseado no tipo de acessório e tamanho do retorno.
-        # Evita o erro 'too many values to unpack' checando se a tupla tem o tamanho esperado.
+
+        # Correção da saída: dependendo do acessório, a saída pode ser uma tupla com múltiplos elementos (como histogramas ou laplaciano), então precisamos tratar isso corretamente.
         if saida is not None:
             if acessorio == "decomposicao":
                 resultado = None
@@ -114,11 +108,10 @@ def main():
                     resultado, laplaciano = saida
                     extra = {"laplaciano": laplaciano}
                 else:
-                    # Se houver lixo residual no cache que retorne 3 elementos, extrai o primeiro com segurança
                     resultado = saida[0] if isinstance(saida, (tuple, list)) else saida
                     extra = None
+            # filtros comuns (como mediana, gaussiano, etc.) retornam apenas a imagem processada
             else:
-                # Filtros comuns de imagem única (como o Filtro Adaptativo de Mediana) caem aqui
                 resultado = saida[0] if isinstance(saida, (tuple, list)) else saida
                 extra = None
 
