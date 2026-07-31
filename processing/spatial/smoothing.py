@@ -41,24 +41,21 @@ Também é usado para conectar elementos brilhantes que estão quebrados ou segm
 '''
 
 
+import cv2
 import numpy as np
 from PIL import Image
-import scipy.ndimage as ndimage
 
 # lembrar de modificar o código para a função de kayke
 
 def gaussian_mean(imagem: Image.Image, sigma: float, ksize: int) -> Image.Image:
-    # O SciPy calcula o tamanho do kernel automaticamente com base no sigma.
-    # Mantemos ksize na assinatura para não quebrar a compatibilidade com o sidebar.py.
+    ksize = int(ksize)
+    if ksize % 2 == 0: ksize += 1
+
+    # Converte PIL para Numpy diretamente
     arr = np.array(imagem) 
+    arr_processado = cv2.GaussianBlur(arr, (ksize, ksize), sigmaX=float(sigma))
     
-    # Se a imagem for RGB (3 dimensões), aplicamos o sigma apenas em X e Y, e 0 no canal de cores.
-    if arr.ndim == 3:
-        sigmas = (float(sigma), float(sigma), 0.0)
-    else:
-        sigmas = float(sigma)
-        
-    arr_processado = ndimage.gaussian_filter(arr, sigma=sigmas)
+    # Converte Numpy de volta para PIL diretamente
     return Image.fromarray(arr_processado)
 
 def median_filter(imagem: Image.Image, ksize: int) -> Image.Image:
@@ -66,11 +63,8 @@ def median_filter(imagem: Image.Image, ksize: int) -> Image.Image:
     if ksize % 2 == 0: ksize += 1
 
     arr = np.array(imagem)
+    arr_processado = cv2.medianBlur(arr, ksize)
     
-    # Previne que o filtro misture os canais RGB
-    tamanho_janela = (ksize, ksize, 1) if arr.ndim == 3 else (ksize, ksize)
-    
-    arr_processado = ndimage.median_filter(arr, size=tamanho_janela)
     return Image.fromarray(arr_processado)
 
 def min_filter(imagem: Image.Image, ksize: int) -> Image.Image:
@@ -78,11 +72,9 @@ def min_filter(imagem: Image.Image, ksize: int) -> Image.Image:
     if ksize % 2 == 0: ksize += 1
 
     arr = np.array(imagem)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ksize, ksize))
+    arr_processado = cv2.erode(arr, kernel)
     
-    tamanho_janela = (ksize, ksize, 1) if arr.ndim == 3 else (ksize, ksize)
-    
-    # O minimum_filter do SciPy tem o exato mesmo efeito da Erosão no OpenCV
-    arr_processado = ndimage.minimum_filter(arr, size=tamanho_janela)
     return Image.fromarray(arr_processado)
 
 def max_filter(imagem: Image.Image, ksize: int) -> Image.Image:
@@ -90,9 +82,7 @@ def max_filter(imagem: Image.Image, ksize: int) -> Image.Image:
     if ksize % 2 == 0: ksize += 1
 
     arr = np.array(imagem)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (ksize, ksize))
+    arr_processado = cv2.dilate(arr, kernel)
     
-    tamanho_janela = (ksize, ksize, 1) if arr.ndim == 3 else (ksize, ksize)
-    
-    # O maximum_filter do SciPy tem o exato mesmo efeito da Dilatação no OpenCV
-    arr_processado = ndimage.maximum_filter(arr, size=tamanho_janela)
     return Image.fromarray(arr_processado)
