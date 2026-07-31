@@ -14,6 +14,7 @@ enquanto remove ruído de sal e pimenta de alta densidade.
 
 import numpy as np
 from PIL import Image
+import scipy.ndimage as ndimage
 
 def adaptive_median(imagem: Image.Image, max_window: int) -> Image.Image:
     """
@@ -29,57 +30,47 @@ def adaptive_median(imagem: Image.Image, max_window: int) -> Image.Image:
         max_window += 1
 
     arr = np.array(imagem)
-    linhas, colunas = arr.shape
-    
-    # Cria a matriz de saída
     out = np.copy(arr)
     
-    # Para lidar com as bordas da imagem sem dar erro de índice,
-    # fazemos um padding (preenchimento) espelhado usando o tamanho máximo necessário.
-    pad_size = max_window // 2
-    padded = np.pad(arr, pad_size, mode='reflect')
+    # Máscara booleana para rastrear quais pixels ainda precisam ser processados
+    # Começa com True (Verdadeiro) para todos os pixels
+    pixels_pendentes = np.ones_like(arr, dtype=bool)
     
-    # Percorre cada pixel da imagem original
-    for i in range(linhas):
-        for j in range(colunas):
+    # Loop baseado no tamanho da janela, pulando de 2 em 2 (3, 5, 7...)
+    for w in range(3, max_window + 1, 2):
+        
+        # Se não há mais pixels pendentes, podemos parar o processamento cedo
+        if not np.any(pixels_pendentes):
+            break
             
-            # Coordenadas ajustadas devido ao padding
-            pi = i + pad_size
-            pj = j + pad_size
-            
-            window_size = 3
-            
-            # Loop de expansão da janela (Nível A)
-            while window_size <= max_window:
-                w_pad = window_size // 2
-                
-                # Extrai a vizinhança atual
-                window = padded[pi - w_pad : pi + w_pad + 1, pj - w_pad : pj + w_pad + 1]
-                
-                z_min = np.min(window)
-                z_max = np.max(window)
-                z_med = np.median(window)
-                z_xy = padded[pi, pj]
-                
-                # Nível A: Verifica se a mediana NÃO é um ruído
-                if z_min < z_med < z_max:
-                    
-                    # Nível B: Verifica se o próprio pixel NÃO é um ruído
-                    if z_min < z_xy < z_max:
-                        out[i, j] = z_xy  # Mantém o pixel original
-                    else:
-                        out[i, j] = z_med # Substitui pela mediana
-                    
-                    # Sai do loop while e vai para o próximo pixel da imagem
-                    break 
-                
-                else:
-                    # A mediana é um ruído. Aumenta a janela e repete Nível A.
-                    window_size += 2
-            
-            # Se a janela estourou o limite máximo (max_window), 
-            # entregamos a mediana da maior janela possível.
-            else:
-                out[i, j] = z_med
+        # O SciPy calcula min, max e mediana para a imagem INTEIRA de uma vez
+        z_min = ndimage.minimum_filter(arr, size=w)
+        z_max = ndimage.maximum_filter(arr, size=w)
+        z_med = ndimage.median_filter(arr, size=w)
+        
+        # Nível A: Verifica se a mediana NÃO é um ruído
+        # Compara as matrizes inteiras simultaneamente
+        nivel_a_passou = (z_med > z_min) & (z_med < z_max)
+        
+        # Nível B: Verifica se o próprio pixel NÃO é um ruído original
+        nivel_b_passou = (arr > z_min) & (arr < z_max)
+        
+        # Condição 1: A passou e B passou -> Mantém o pixel original
+        manter_original = nivel_a_passou & nivel_b_passou & pixels_pendentes
+        
+        # Condição 2: A passou, mas B falhou -> Substitui pela mediana
+        usar_mediana = nivel_a_passou & (~nivel_b_passou) & pixels_pendentes
+        
+        # Aplica as decisões apenas nos pixels que satisfizeram as condições
+        out[manter_original] = arr[manter_original]
+        out[usar_mediana] = z_med[usar_mediana]
+        
+        # Marca esses pixels como "resolvidos" (False) para as próximas iterações
+        pixels_pendentes[manter_original | usar_mediana] = False
+
+    # Se a janela estourou o limite máximo (max_window) e ainda sobraram pixels pendentes,
+    # entregamos a mediana da maior janela possível para eles.
+    if np.any(pixels_pendentes):
+        out[pixels_pendentes] = z_med[pixels_pendentes]
                 
     return Image.fromarray(out)
