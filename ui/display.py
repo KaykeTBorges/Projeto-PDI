@@ -5,6 +5,7 @@ processo selecionado, exibição de dados/imagens acessórias (histogramas,
 laplaciano, decomposições) e os botões de download do(s) resultado(s).
 """
 
+import matplotlib.pyplot as plt
 import numpy as np
 import streamlit as st
 from PIL import Image
@@ -30,7 +31,7 @@ def render_input_image(imagem_original: Image.Image):
     col_original, col_saida = st.columns(2)
     with col_original:
         st.subheader("Imagem de entrada")
-        st.image(imagem_original, use_container_width=True)
+        st.image(imagem_original, width="stretch")
     return col_original, col_saida
 
 
@@ -59,7 +60,7 @@ def render_output_image(col_saida, resultado, extra):
     with col_saida:
         st.subheader("Imagem de saída")
         if resultado is not None:
-            st.image(resultado, use_container_width=True)
+            st.image(resultado, width="stretch")
         elif extra is not None:
             st.caption("Veja o resultado na seção 'Dados/Imagens acessórias' abaixo.")
         else:
@@ -80,18 +81,33 @@ def render_extra(extra: dict | None):
 
     if "hist_antes" in extra:
         c1, c2 = st.columns(2)
+        x = np.arange(256)
+
         with c1:
-            st.caption("Histograma antes da equalização")
-            st.bar_chart(np.array(extra["hist_antes"]))
+            fig, ax = plt.subplots(figsize=(6, 3))
+            ax.bar(x, extra["hist_antes"], color="#4a90d9", width=1.0)
+            ax.set_title("Antes da equalização")
+            ax.set_xlabel("Tom de cinza (0–255)")
+            ax.set_ylabel("Frequência normalizada")
+            ax.set_xlim(0, 255)
+            st.pyplot(fig)
+            plt.close(fig)
+
         with c2:
-            st.caption("Histograma depois da equalização")
-            st.bar_chart(np.array(extra["hist_depois"]))
+            fig, ax = plt.subplots(figsize=(6, 3))
+            ax.bar(x, extra["hist_depois"], color="#e07b39", width=1.0)
+            ax.set_title("Depois da equalização")
+            ax.set_xlabel("Tom de cinza (0–255)")
+            ax.set_ylabel("Frequência normalizada")
+            ax.set_xlim(0, 255)
+            st.pyplot(fig)
+            plt.close(fig)
 
     if "laplaciano" in extra:
         st.caption("Laplaciano da imagem")
-        st.image(extra["laplaciano"], use_container_width=True)
+        st.image(extra["laplaciano"], width="stretch")
 
-    # Decomposições (RGB ou HSV): dict com as 3 imagens de saída, uma por canal
+    # Decomposições RGB/HSV
     eh_decomposicao = (
         isinstance(extra, dict)
         and all(isinstance(v, Image.Image) for v in extra.values())
@@ -102,7 +118,7 @@ def render_extra(extra: dict | None):
         for coluna, (nome_canal, img_canal) in zip(colunas, extra.items()):
             with coluna:
                 st.caption(f"Canal {nome_canal}")
-                st.image(img_canal, use_container_width=True)
+                st.image(img_canal, width="stretch")
                 st.download_button(
                     label=f"Salvar canal {nome_canal}",
                     data=image_io.save_image(img_canal),
