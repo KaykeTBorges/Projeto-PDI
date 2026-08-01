@@ -1,0 +1,98 @@
+UFPB-CI-DSC
+Disciplina: Introdução ao Processamento Digital de Imagens
+Prof. Augusto de Holanda B. M. Tavares
+20 de Fevereiro de 2026
+
+Avaliação da 3ª unidade - Projeto
+Objetivo
+O objetivo do projeto é o desenvolvimento de um software que permita ao usuário aplicar
+diversos processos a uma imagem digital, podendo definir os seus parâmetros, assim como
+a extração das métricas relevantes. O projeto será realizado em grupo, e a avaliação será
+composta tanto pela qualidade do programa apresentado como pela resposta dos integrantes
+do grupo a perguntas a respeito do seu trabalho.
+
+Requisitos gerais
+O software apresentado deve possuir uma interface de usuário intuitiva, a partir de onde
+seja possível carregar imagens para processamento. Deve ser possível escolher entre diversos
+processos a serem aplicados à imagem, com a possibilidade do usuário alterar os seus respectivos parâmetros. O software deve trabalhar tanto com imagens em escala de cinza de 8
+bits como com imagens coloridas RGB de 24 bits, todas em formato .png.
+Quando uma imagem colorida ou em escala de cinza for carregada as operações que não
+são relevantes para cada um destes casos devem ser desabilitadas (equalização de histograma
+para imagens coloridas, por exemplo). A todo momento deve ser possível visualizar tanto a
+imagem original como a(s) imagem(ns) resultante(s) do processamento, assim como outras
+informações relevantes para cada caso específico.
+Deve haver a possibilidade de o resultado do processo ser salvo em um novo arquivo
+.png. É importante destacar que não há restrições sobre o ferramental de desenvolvimento.
+No entanto, o software resultante deve ser de fácil execução, sendo o fornecimento de um
+ambiente adequado para tal também responsabilidade do grupo.
+A Figura 1 apresenta um exemplo de um esboço de uma possível interface contendo os
+elementos básicos exigidos pelos requisitos acima. Note que trata-se apenas de um exemplo,
+sendo uma prerrogativa do grupo tomar decisões acerca de como apresentar estes elementos
+no software apresentado.
+
+1
+
+Figura 1: Exemplo de esboço para uma interface de usuário correspondente aos requisitos
+gerais apresentados acima.
+
+Requisitos específicos
+Abaixo estão listados os processos que devem estar presentes no software apresentado,
+assim como observações pertinentes a cerca de seus parâmetros.
+• Decomposição em componentes RGB: A partir da imagem original são fornecidas três imagens em escala de cinza, cada uma representando um dos canais RGB
+correspondentes.
+• Decomposição em componentes HSV: A partir da imagem original são fornecidas três imagens em escala de cinza, cada uma representando um dos canais HSV
+correspondentes.
+• Limiarização: Deve ser possível ajustar o valor do limiar k.
+• Transformação de intensidade logarítmica: Deve ser possível ajustar o ganho da
+transformação c.
+• Transformação de intensidade de potência: Deve ser possível ajustar o ganho da
+transformação c e o valor de gama γ
+
+2
+
+• Equalização de histograma: Além da imagem equalizada, devem ser apresentados
+os histogramas de intensidade antes e depois da equalização.
+• Fatiamento por intensidade: Deve ser possível definir a faixa de interesse [A, B] e
+se o fundo deve ser preservado ou definido para zero.
+• Filtro de média gaussiana: Deve ser possível ajustar o desvio padrão σ da distribuição.
+• Filtros de mediana, mínimo e máximo.
+• Máscara de aguçamento: Deve ser possível ajustar o valor do ganho do aguçamento.
+• Realce por Laplaciano: Deve ser apresentada tanto a imagem processada como o
+seu Laplaciano ajustado.
+• Gradiente de Sobel: Deve ser apresentado o gradiente de Sobel da imagem.
+• Filtros passa-alta e passa-baixa gaussiano: Deve ser possível ajustar a frequência
+de corte do filtro.
+• Filtros passa-alta e passa-baixa de Butterworth: Deve ser possível ajustar a
+frequência de corte do filtro e a sua ordem.
+• Filtro adaptativo de mediana: Deve ser possível ajustar o tamanho máximo da
+janela do filtro.
+• Aplicação de ruído aditivo gaussiano: Deve ser possível ajustar a intensidade e a
+distribuição do ruído.
+• Aplicação de ruídos sal, pimenta e sal e pimenta: Deve ser possível ajustar a
+distribuição do ruído para o caso sal e pimenta.
+Nota: Para todos os filtros definidos no espaço deve ser possível alterar o tamanho da
+janela de convolução.
+
+Avaliação
+A avaliação irá ocorrer em dois eixos: análise da qualidade técnica do software apresentado, valendo seis (6,0) pontos, e avaliação das respostas fornecidas pelo grupo a perguntas
+realizadas pelo avaliados, valendo quatro (4,0) pontos. Os dois eixos são descritos em mais
+detalhes abaixo:
+• Qualidade técnica: Será fornecida uma lista de 5 dos processos listados acima a serem
+realizados na hora da avaliação, assim como os seus respectivos parâmetros. Cada
+processo cujo resultado seja coerente com o que determina a natureza do processo irá
+valer um ponto. O ponto restante compreende a análise da qualidade da experiência de
+uso do software apresentado (elementos de interface, tempo de execução dos processos,
+clareza visual, etc.).
+3
+
+• Perguntas: Ao longo da execução dos processos serão colocadas perguntas para cada
+um dos membros a respeito da natureza do processo sendo executado e qual o resultado
+esperado para o caso em questão. Uma resposta correta terá o valor da fração dos 4,0
+pontos atribuídos a este item correspondente a cada um dos membros do grupo (1,33
+ponto um grupo com 3 membros, por exemplo). É importante notar que as perguntas
+serão feitas a cada membro individualmente, ou seja, os demais membros não
+poderão responder ou auxiliar de qualquer forma quando não for sua vez de responder.
+
+4
+
+

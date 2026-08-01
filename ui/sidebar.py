@@ -109,7 +109,7 @@ PROCESSOS = {
     "Transformação de intensidade logarítmica": {
         "categoria": "Transformação de intensidade",
         "tipos": ["grayscale"],
-        "params": [{"nome": "c", "label": "Ganho (c)", "tipo": "number", "min": 0.0, "max": 100.0, "default": 1.0}],
+        "params": [{"nome": "c", "label": "Ganho (c)", "tipo": "number", "min": 0.0, "max": 100.0, "default": 10.0}],
         "acessorio": None,
         "fn": run_log_transform,
     },
