@@ -9,7 +9,7 @@ import streamlit as st
 from processing.color import rgb_decomposition, hsv_decomposition
 from processing.grayscale import thresholding, intensity_transform, histogram_eq
 from processing.spatial import smoothing, sharpening, edge_detection, noise, adaptive_median
-from processing.frequency import gaussian_filters
+from processing.frequency import gaussian_filters, butterworth_filters
 
 
 # ---------------------------------------------------------------------------
@@ -71,6 +71,15 @@ def run_adaptive_median(img, p):
 
 def run_gaussian_lowpass(img, p):
     return gaussian_filters.gaussian_lowpass(img, p["cutoff"])
+
+def run_gaussian_highpass(img, p):
+    return gaussian_filters.gaussian_highpass(img, p["cutoff"])
+
+def run_butterworth_lowpass(img, p):
+    return butterworth_filters.butterworth_lowpass(img, p["cutoff"], p["order"])
+
+def run_butterworth_highpass(img, p):
+    return butterworth_filters.butterworth_highpass(img, p["cutoff"], p["order"])
 
 
 # Dicionário de processos disponíveis, com suas categorias, tipos de imagem compatíveis, parâmetros e funções de execução.
@@ -183,7 +192,9 @@ PROCESSOS = {
     "Gradiente de Sobel": {
         "categoria": "Filtros espaciais",
         "tipos": ["grayscale"],
-        "params": [{"nome": "ksize", "label": "Tamanho da janela", "tipo": "slider_odd", "min": 3, "max": 21, "default": 3}],
+        "params": [
+            {"nome": "ksize", "label": "Tamanho da janela", "tipo": "slider_odd", "min": 3, "max": 7, "default": 3},
+        ],
         "acessorio": None,
         "fn": run_sobel,
     },
@@ -220,6 +231,33 @@ PROCESSOS = {
         "params": [{"nome": "cutoff", "label": "Frequência de corte", "tipo": "number", "min": 1.0, "max": 200.0, "default": 30.0}],
         "acessorio": None,
         "fn": run_gaussian_lowpass,
+    },
+        "Filtro passa-alta gaussiano": {
+        "categoria": "Filtros de frequência",
+        "tipos": ["grayscale"],
+        "params": [{"nome": "cutoff", "label": "Frequência de corte", "tipo": "number", "min": 1.0, "max": 200.0, "default": 30.0}],
+        "acessorio": None,
+        "fn": run_gaussian_highpass,
+    },
+    "Filtro passa-baixa Butterworth": {
+        "categoria": "Filtros de frequência",
+        "tipos": ["grayscale"],
+        "params": [
+            {"nome": "cutoff", "label": "Frequência de corte", "tipo": "number", "min": 1.0, "max": 200.0, "default": 30.0},
+            {"nome": "order", "label": "Ordem do filtro", "tipo": "slider", "min": 1, "max": 10, "default": 2},
+        ],
+        "acessorio": None,
+        "fn": run_butterworth_lowpass,
+    },
+    "Filtro passa-alta Butterworth": {
+        "categoria": "Filtros de frequência",
+        "tipos": ["grayscale"],
+        "params": [
+            {"nome": "cutoff", "label": "Frequência de corte", "tipo": "number", "min": 1.0, "max": 200.0, "default": 30.0},
+            {"nome": "order", "label": "Ordem do filtro", "tipo": "slider", "min": 1, "max": 10, "default": 2},
+        ],
+        "acessorio": None,
+        "fn": run_butterworth_highpass,
     },
 }
 
