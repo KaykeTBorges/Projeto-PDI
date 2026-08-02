@@ -45,7 +45,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-# lembrar de modificar o código para a função de kayke
+
 
 def gaussian_mean(imagem: Image.Image, sigma: float, ksize: int) -> Image.Image:
     ksize = int(ksize)
