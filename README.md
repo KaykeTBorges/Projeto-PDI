@@ -97,4 +97,51 @@ O sistema contempla todos os processos exigidos na avaliação:
 └── utils/                           # Utilidades gerais
     ├── image_io.py                 # Carregamento e exportação de imagens (.png)
     └── validation.py                # Detecção do tipo de imagem e validações
+
 ```
+
+## 📋 Pré-requisitos
+
+Para rodar este projeto localmente, você precisará ter instalado em sua máquina:
+
+* [Python 3.10+](https://www.python.org/downloads/)
+* Gerenciador de pacotes do Python (`pip`)
+* [Git](https://git-scm.com/)
+
+## 🔧 Instruções de Instalação e Execução
+
+**1. Clone o repositório e entre na pasta**
+
+```bash
+git clone https://github.com/SEU_USUARIO/Projeto-PDI.git
+cd Projeto-PDI
+
+```
+
+**2. Crie o ambiente virtual (venv)**
+
+```bash
+python3 -m venv venv
+
+```
+
+**3. Ative o ambiente virtual**
+
+```bash
+source venv/bin/activate
+
+```
+
+*(No Windows, use: `venv\Scripts\activate`)*
+
+**4. Instale as dependências**
+
+```bash
+pip install -r requirements.txt
+
+```
+
+**5. Execute a aplicação**
+
+```bash
+streamlit run app.py
