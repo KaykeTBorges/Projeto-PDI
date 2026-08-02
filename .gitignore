@@ -25,5 +25,7 @@ Thumbs.db
 *.avi
 
 #Adicione uma exclamação se quiser manter alguma imagem de teste específica
-!assets/test1.jpg  
-!assets/test2.jpg 
+!assets/sample_images/apocalypse-now.png 
+!assets/sample_images/gray-scale.png
+!assets/sample_images/paris-texas.png
+!assets/sample_images/salt-and-pepper.png
