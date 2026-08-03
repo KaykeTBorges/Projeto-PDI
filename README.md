@@ -56,7 +56,6 @@ O sistema contempla todos os processos exigidos na avaliação:
 * **Exportação:** Botão de download para salvar os resultados processados em arquivo `.png`.
 * **Métricas:** Exibição de dimensões, menor/maior intensidade e média de tons de cinza.
 
----
 
 ## Estrutura do Repositório
 
@@ -64,53 +63,50 @@ O sistema contempla todos os processos exigidos na avaliação:
 .
 ├── app.py                          # Ponto de entrada da aplicação Streamlit (orquestração)
 ├── requirements.txt                # Dependências do Python
+├── Dockerfile                      # Instruções para construção da imagem Docker
+├── docker-compose.yml              # Orquestração do container
 ├── README.md                       # Documentação do projeto
+├── projeto.pdf                     # Especificações originais do projeto
 │
 ├── assets/                         # Imagens/arquivos estáticos usados no projeto
 │
 ├── processing/                     # Módulos de processamento, separados por categoria
-│   ├── color/
-│   │   ├── rgb_decomposition.py    # Decomposição em componentes RGB
-│   │   └── hsv_decomposition.py    # Decomposição em componentes HSV
-│   │
-│   ├── grayscale/
-│   │   ├── thresholding.py         # Limiarização
-│   │   ├── intensity_transform.py  # Transformações log/potência e fatiamento por intensidade
-│   │   └── histogram_eq.py         # Equalização de histograma
-│   │
-│   ├── spatial/
-│   │   ├── smoothing.py            # Filtros de média gaussiana, mediana, mínimo e máximo
-│   │   ├── sharpening.py           # Máscara de aguçamento
-│   │   ├── edge_detection.py       # Realce por Laplaciano e gradiente de Sobel
-│   │   ├── noise.py                # Ruído aditivo gaussiano e ruído sal e pimenta
-│   │   └── adaptive_median.py      # Filtro adaptativo de mediana
-│   │
-│   └── frequency/
-│       ├── fft_utils.py            # Utilitários de FFT usados pelos filtros de frequência
-│       ├── gaussian_filters.py     # Filtros passa-alta/passa-baixa gaussianos
-│       └── butterworth_filters.py  # Filtros passa-alta/passa-baixa de Butterworth
+│   ├── color/                      # RGB e HSV
+│   ├── grayscale/                  # Limiarização, transformações log/gamma e histograma
+│   ├── spatial/                    # Filtros espaciais, aguçamento, bordas e ruídos
+│   └── frequency/                  # Filtros de Fourier (Gaussiano e Butterworth)
 │
-├── ui/                              # Componentes de interface
+├── ui/                             # Componentes de interface
 │   ├── sidebar.py                  # Catálogo de processos e seleção na barra lateral
 │   └── display.py                  # Upload, exibição de imagens, parâmetros e downloads
 │
-└── utils/                           # Utilidades gerais
+└── utils/                          # Utilidades gerais
     ├── image_io.py                 # Carregamento e exportação de imagens (.png)
-    └── validation.py                # Detecção do tipo de imagem e validações
+    └── validation.py               # Detecção do tipo de imagem e validações
 
 ```
 
+---
+
 ## 📋 Pré-requisitos
 
-Para rodar este projeto localmente, você precisará ter instalado em sua máquina:
+Para rodar este projeto, escolha uma das opções abaixo e certifique-se de ter as ferramentas necessárias instaladas:
 
-* [Python 3.10+](https://www.python.org/downloads/)
-* Gerenciador de pacotes do Python (`pip`)
+**Opção 1: Via Docker (Recomendado)**
+
+* [Docker](https://www.docker.com/products/docker-desktop/) e Docker Compose instalados.
 * [Git](https://git-scm.com/)
+
+**Opção 2: Localmente via Python**
+
+* [Python 3.10+](https://www.python.org/downloads/) e `pip`
+* [Git](https://git-scm.com/)
+
+---
 
 ## 🔧 Instruções de Instalação e Execução
 
-**1. Clone o repositório e entre na pasta**
+Primeiro, clone o repositório em sua máquina:
 
 ```bash
 git clone https://github.com/SEU_USUARIO/Projeto-PDI.git
@@ -118,14 +114,36 @@ cd Projeto-PDI
 
 ```
 
-**2. Crie o ambiente virtual (venv)**
+### 🐳 Opção 1: Executando com Docker (Recomendado)
+
+Esta é a maneira mais simples, pois isola completamente a aplicação e suas dependências.
+
+**1. Construa e inicie o container:**
+
+```bash
+docker-compose up --build
+
+```
+
+**2. Acesse a aplicação:**
+Abra o seu navegador e acesse `http://localhost:8501`.
+
+*(Para parar a execução, pressione `Ctrl+C` no terminal ou rode `docker-compose down`).*
+
+---
+
+### 💻 Opção 2: Executando Localmente (Com venv)
+
+Caso deseje rodar a aplicação diretamente no seu sistema operacional para modificar o código e ver as alterações em tempo real.
+
+**1. Crie o ambiente virtual (venv)**
 
 ```bash
 python3 -m venv venv
 
 ```
 
-**3. Ative o ambiente virtual**
+**2. Ative o ambiente virtual**
 
 ```bash
 source venv/bin/activate
@@ -134,14 +152,19 @@ source venv/bin/activate
 
 *(No Windows, use: `venv\Scripts\activate`)*
 
-**4. Instale as dependências**
+**3. Instale as dependências**
 
 ```bash
 pip install -r requirements.txt
 
 ```
 
-**5. Execute a aplicação**
+**4. Execute a aplicação**
 
 ```bash
 streamlit run app.py
+
+```
+
+*(O Streamlit abrirá automaticamente uma aba no seu navegador padrão no endereço `http://localhost:8501`).*
+
